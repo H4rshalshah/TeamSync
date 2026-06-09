@@ -10,6 +10,7 @@ import {
   loginOrCreateAccountService,
   verifyUserService,
 } from "../services/auth.service";
+import UserModel from "../models/user.model";
 
 if (config.GOOGLE_CLIENT_ID && config.GOOGLE_CLIENT_SECRET) {
   passport.use(
@@ -70,5 +71,13 @@ passport.use(
   )
 );
 
-passport.serializeUser((user: any, done) => done(null, user));
-passport.deserializeUser((user: any, done) => done(null, user));
+passport.serializeUser((user: any, done) => done(null, user._id?.toString() || user.id));
+
+passport.deserializeUser(async (id: string, done) => {
+  try {
+    const user = await UserModel.findById(id).select("-password");
+    done(null, user || null);
+  } catch (error) {
+    done(error, null);
+  }
+});

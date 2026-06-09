@@ -15,8 +15,17 @@ const sessionMiddleware = session({
 });
 
 // Wrap session + passport for socket.io handshake
-const wrap = (middleware: any) => (socket: Socket, next: any) =>
-  middleware(socket.request, {} as any, next);
+// Handle proxy-forwarded protocol (Render uses proxy, so check x-forwarded-proto header)
+const wrap = (middleware: any) => (socket: Socket, next: any) => {
+  const req = socket.request as any;
+  if (
+    config.NODE_ENV === "production" &&
+    req.headers?.["x-forwarded-proto"] === "https"
+  ) {
+    req.secure = true;
+  }
+  middleware(req, {} as any, next);
+};
 
 export const setupSocket = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {

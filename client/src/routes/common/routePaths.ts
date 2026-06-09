@@ -23,6 +23,7 @@ export const AUTH_ROUTES = {
   SIGN_UP: "/sign-up",
   FORGOT_PASSWORD: "/forgot-password",
   RESET_PASSWORD: "/reset-password/:token",
+  OAUTH_CALLBACK: "/oauth/callback",
   GOOGLE_OAUTH_CALLBACK: "/google/oauth/callback",
 };
 

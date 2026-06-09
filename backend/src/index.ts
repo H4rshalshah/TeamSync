@@ -33,6 +33,9 @@ const BASE_PATH = config.BASE_PATH;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Trust proxy for Render/Vercel deployment (secure cookies behind proxy)
+app.set("trust proxy", 1);
+
 app.use(
   session({
     name: "session",

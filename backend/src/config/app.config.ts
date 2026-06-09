@@ -24,7 +24,7 @@ const appConfig = () => ({
   SMTP_PASS: getEnv("SMTP_PASS", ""),
   SMTP_FROM: getEnv("SMTP_FROM", "Team Sync <no-reply@teamsync.local>"),
 
-  FRONTEND_ORIGIN: getEnv("FRONTEND_ORIGIN", "localhost"),
+  FRONTEND_ORIGIN: getEnv("FRONTEND_ORIGIN", "http://localhost:3000"),
   FRONTEND_GOOGLE_CALLBACK_URL: getEnv("FRONTEND_GOOGLE_CALLBACK_URL"),
 });
 

@@ -28,7 +28,7 @@ const getFrontendOrigin = () => {
 };
 
 const getAuthFailureUrl = (provider: "google" | "github") => {
-  return `${getFrontendOrigin()}/google/oauth/callback?status=failure&provider=${provider}`;
+  return `${getFrontendOrigin()}/oauth/callback?status=failure&provider=${provider}`;
 };
 
 const getWorkspaceRedirectUrl = (workspaceId: string) =>

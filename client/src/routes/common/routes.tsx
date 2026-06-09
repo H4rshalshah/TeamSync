@@ -18,6 +18,7 @@ export const authenticationRoutePaths = [
   { path: AUTH_ROUTES.SIGN_UP, element: <SignUp /> },
   { path: AUTH_ROUTES.FORGOT_PASSWORD, element: <ForgotPassword /> },
   { path: AUTH_ROUTES.RESET_PASSWORD, element: <ResetPassword /> },
+  { path: AUTH_ROUTES.OAUTH_CALLBACK, element: <GoogleOAuthFailure /> },
   { path: AUTH_ROUTES.GOOGLE_OAUTH_CALLBACK, element: <GoogleOAuthFailure /> },
 ];
 
