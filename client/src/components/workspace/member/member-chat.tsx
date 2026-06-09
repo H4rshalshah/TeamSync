@@ -150,25 +150,6 @@ const MemberChat = () => {
     },
   });
 
-  // ── Delete single entry ────────────────────────────────
-  const { mutate: deleteSingleEntry } = useMutation({
-    mutationFn: deleteCollaborationEntryMutationFn,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
-      toast({
-        title: "Message deleted",
-        variant: "success",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Failed to delete",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
   // ── Delete selected entries ────────────────────────────
   const { mutate: deleteSelected, isPending: isDeletingSelected } = useMutation({
     mutationFn: async () => {
