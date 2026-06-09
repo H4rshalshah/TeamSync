@@ -11,6 +11,8 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Permissions } from "@/constant";
+import PermissionsGuard from "@/components/resuable/permission-guard";
 import useCreateProjectDialog from "@/hooks/use-create-project-dialog";
 import useWorkspaceId from "@/hooks/use-workspace-id";
 import AnalyticsCharts from "@/components/workspace/dashboard/analytics-charts";
@@ -79,10 +81,12 @@ const WorkspaceDashboard = () => {
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
         >
-          <Button onClick={onOpenProject} size="default" className="gap-2 w-full sm:w-auto">
-            <Plus className="h-4 w-4" />
-            New Project
-          </Button>
+          <PermissionsGuard requiredPermission={Permissions.CREATE_PROJECT}>
+            <Button onClick={onOpenProject} size="default" className="gap-2 w-full sm:w-auto">
+              <Plus className="h-4 w-4" />
+              New Project
+            </Button>
+          </PermissionsGuard>
         </motion.div>
       </motion.div>
 
@@ -187,15 +191,17 @@ const WorkspaceDashboard = () => {
               <h3 className="text-sm font-semibold">Quick Actions</h3>
             </div>
             <div className="mt-2 grid grid-cols-2 gap-1.5">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-auto flex-col gap-0.5 py-2 text-[11px]"
-                onClick={onOpenProject}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                New Project
-              </Button>
+              <PermissionsGuard requiredPermission={Permissions.CREATE_PROJECT}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-auto flex-col gap-0.5 py-2 text-[11px]"
+                  onClick={onOpenProject}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  New Project
+                </Button>
+              </PermissionsGuard>
               <Button
                 variant="outline"
                 size="sm"

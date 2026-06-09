@@ -37,7 +37,7 @@ const RecentProjects = () => {
         </div>
       )}
 
-      <ul role="list" className="space-y-1">
+      <ul role="list" className="max-h-[300px] space-y-1 overflow-y-auto pr-1 scrollbar-dashboard">
         {projects.map((project) => {
           const name = project.createdBy.name;
           const initials = getAvatarFallbackText(name);

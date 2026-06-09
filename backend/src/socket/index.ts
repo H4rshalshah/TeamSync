@@ -101,3 +101,13 @@ export const emitCollaborationEntry = (
 ) => {
   io.to(`workspace:${workspaceId}`).emit("collaboration:new", entry);
 };
+
+// Generic helper to emit any typed event to a workspace room for real-time sync
+export const emitWorkspaceEvent = (
+  io: Server,
+  workspaceId: string,
+  event: string,
+  data: any
+) => {
+  io.to(`workspace:${workspaceId}`).emit(event, data);
+};

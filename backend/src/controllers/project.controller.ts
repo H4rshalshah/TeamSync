@@ -18,6 +18,7 @@ import {
   updateProjectService,
 } from "../services/project.service";
 import { HTTPSTATUS } from "../config/http.config";
+import { emitWorkspaceEvent } from "../socket";
 
 export const createProjectController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -29,6 +30,15 @@ export const createProjectController = asyncHandler(
     roleGuard(role, [Permissions.CREATE_PROJECT]);
 
     const { project } = await createProjectService(userId, workspaceId, body);
+
+    // Real-time sync: notify all workspace members
+    const io = req.app.get("io");
+    if (io) {
+      emitWorkspaceEvent(io, workspaceId, "project:created", {
+        workspaceId,
+        project,
+      });
+    }
 
     return res.status(HTTPSTATUS.CREATED).json({
       message: "Project created successfully",
@@ -128,6 +138,16 @@ export const updateProjectController = asyncHandler(
       body
     );
 
+    // Real-time sync: notify all workspace members
+    const io = req.app.get("io");
+    if (io) {
+      emitWorkspaceEvent(io, workspaceId, "project:updated", {
+        workspaceId,
+        projectId,
+        project,
+      });
+    }
+
     return res.status(HTTPSTATUS.OK).json({
       message: "Project updated successfully",
       project,
@@ -146,6 +166,15 @@ export const deleteProjectController = asyncHandler(
     roleGuard(role, [Permissions.DELETE_PROJECT]);
 
     await deleteProjectService(workspaceId, projectId);
+
+    // Real-time sync: notify all workspace members
+    const io = req.app.get("io");
+    if (io) {
+      emitWorkspaceEvent(io, workspaceId, "project:deleted", {
+        workspaceId,
+        projectId,
+      });
+    }
 
     return res.status(HTTPSTATUS.OK).json({
       message: "Project deleted successfully",

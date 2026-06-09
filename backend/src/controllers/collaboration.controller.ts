@@ -13,7 +13,7 @@ import {
 } from "../services/collaboration.service";
 import { roleGuard } from "../utils/roleGuard";
 import { workspaceIdSchema } from "../validation/workspace.validation";
-import { emitCollaborationEntry } from "../socket";
+import { emitCollaborationEntry, emitWorkspaceEvent } from "../socket";
 
 const collaborationEntrySchema = z.object({
   kind: z.enum(["UPDATE", "CHAT"]),
@@ -83,6 +83,16 @@ export const removeWorkspaceMemberController = asyncHandler(
       memberUserId,
       userId
     );
+
+    // Real-time sync: notify all workspace members
+    const io = req.app.get("io");
+    if (io) {
+      emitWorkspaceEvent(io, workspaceId, "member:removed", {
+        workspaceId,
+        memberId,
+        memberUserId,
+      });
+    }
 
     return res.status(HTTPSTATUS.OK).json({
       message: "Member removed successfully",

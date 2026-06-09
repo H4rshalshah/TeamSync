@@ -6,6 +6,7 @@ import {
   joinWorkspaceByInviteService,
   validateWorkspaceInviteService,
 } from "../services/member.service";
+import { emitWorkspaceEvent } from "../socket";
 
 export const joinWorkspaceController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -18,6 +19,16 @@ export const joinWorkspaceController = asyncHandler(
       inviteCode,
       invitePassword
     );
+
+    // Real-time sync: notify existing workspace members
+    const io = req.app.get("io");
+    if (io) {
+      emitWorkspaceEvent(io, String(workspaceId), "member:joined", {
+        workspaceId: String(workspaceId),
+        userId,
+        role,
+      });
+    }
 
     return res.status(HTTPSTATUS.OK).json({
       message: "Successfully joined the workspace",

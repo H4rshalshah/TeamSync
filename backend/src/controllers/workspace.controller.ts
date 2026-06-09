@@ -21,6 +21,7 @@ import { getMemberRoleInWorkspace } from "../services/member.service";
 import { Permissions } from "../enums/role.enum";
 import { roleGuard } from "../utils/roleGuard";
 import { updateWorkspaceSchema } from "../validation/workspace.validation";
+import { emitWorkspaceEvent } from "../socket";
 
 export const createWorkspaceController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -118,6 +119,17 @@ export const changeWorkspaceMemberRoleController = asyncHandler(
       roleId
     );
 
+    // Real-time sync: notify all workspace members
+    const io = req.app.get("io");
+    if (io) {
+      emitWorkspaceEvent(io, workspaceId, "member:roleChanged", {
+        workspaceId,
+        memberId,
+        roleId,
+        member,
+      });
+    }
+
     return res.status(HTTPSTATUS.OK).json({
       message: "Member Role changed successfully",
       member,
@@ -140,6 +152,15 @@ export const updateWorkspaceByIdController = asyncHandler(
       name,
       description
     );
+
+    // Real-time sync: notify all workspace members
+    const io = req.app.get("io");
+    if (io) {
+      emitWorkspaceEvent(io, workspaceId, "workspace:updated", {
+        workspaceId,
+        workspace,
+      });
+    }
 
     return res.status(HTTPSTATUS.OK).json({
       message: "Workspace updated successfully",

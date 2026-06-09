@@ -4,7 +4,6 @@ import {
   Bell,
   CheckCircle2,
   Loader,
-  MessageSquare,
   Send,
   Trash2,
   TrendingUp,
@@ -16,7 +15,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -35,6 +33,7 @@ import {
   getWorkspaceCollaborationQueryFn,
 } from "@/lib/api";
 import { CollaborationEntryType } from "@/types/api.type";
+import MemberChat from "./member-chat";
 
 const ProgressBar = ({ value }: { value: number }) => (
   <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
@@ -47,57 +46,30 @@ const ProgressBar = ({ value }: { value: number }) => (
   </div>
 );
 
-const formatChatTime = (date: Date) =>
-  date.toLocaleTimeString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-
 const EntryCard = ({
   entry,
   onDelete,
-  selectable = false,
-  selected = false,
-  onToggle,
 }: {
   entry: CollaborationEntryType;
   onDelete?: (id: string) => void;
-  selectable?: boolean;
-  selected?: boolean;
-  onToggle?: (id: string) => void;
 }) => (
   <motion.div
     layout
     initial={{ opacity: 0, y: 12 }}
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, scale: 0.96 }}
-    className={`group rounded-lg border bg-background/92 shadow-sm transition hover:border-primary/35 ${
-      selectable
-        ? "w-[min(100%,380px)] px-3 py-2.5"
-        : "w-full max-w-[320px] px-3 py-2"
-    }`}
+    className="group w-full max-w-[320px] rounded-lg border bg-background/92 px-3 py-2 shadow-sm transition hover:border-primary/35"
   >
     <div className="mb-2 flex items-center justify-between gap-3">
       <div className="flex min-w-0 items-start gap-2">
-        {selectable && (
-          <Checkbox
-            checked={selected}
-            onCheckedChange={() => onToggle?.(entry._id)}
-            aria-label="Select message"
-            className="mt-0.5 h-4 w-4 rounded-full"
-          />
-        )}
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{entry.author?.name}</p>
-          {!selectable && (
-            <p className="text-xs text-muted-foreground">
-              {formatDistanceToNow(new Date(entry.createdAt), { addSuffix: true })}
-            </p>
-          )}
+          <p className="text-xs text-muted-foreground">
+            {formatDistanceToNow(new Date(entry.createdAt), { addSuffix: true })}
+          </p>
         </div>
       </div>
-      {!selectable && onDelete && (
+      {onDelete && (
         <Button
           variant="ghost"
           size="icon"
@@ -112,11 +84,6 @@ const EntryCard = ({
     <p className="min-h-6 text-sm leading-relaxed text-foreground">
       {entry.message}
     </p>
-    {selectable && (
-      <p className="mt-2 text-right text-[11px] font-medium text-muted-foreground">
-        {formatChatTime(new Date(entry.createdAt))}
-      </p>
-    )}
     <div className="mt-3 flex flex-wrap items-center gap-2">
       {entry.progress !== null && entry.progress !== undefined && (
         <Badge variant="secondary">{entry.progress}% progress</Badge>
@@ -137,9 +104,7 @@ const WorkspaceCollaboration = () => {
   const [updateMessage, setUpdateMessage] = useState("");
   const [blocker, setBlocker] = useState("");
   const [progress, setProgress] = useState(50);
-  const [chatMessage, setChatMessage] = useState("");
   const [updatesOpen, setUpdatesOpen] = useState(false);
-  const [selectedChatIds, setSelectedChatIds] = useState<string[]>([]);
 
   const queryKey = ["workspace-collaboration", workspaceId];
 
@@ -169,21 +134,6 @@ const WorkspaceCollaboration = () => {
     onSuccess: invalidate,
   });
 
-  const { mutate: deleteSelectedChats, isPending: isDeletingSelected } =
-    useMutation({
-      mutationFn: async () => {
-        await Promise.all(
-          selectedChatIds.map((entryId) =>
-            deleteCollaborationEntryMutationFn({ workspaceId, entryId })
-          )
-        );
-      },
-      onSuccess: () => {
-        setSelectedChatIds([]);
-        invalidate();
-      },
-    });
-
   const { mutate: clearWindow, isPending: isClearing } = useMutation({
     mutationFn: deleteCollaborationEntriesMutationFn,
     onSuccess: invalidate,
@@ -192,8 +142,6 @@ const WorkspaceCollaboration = () => {
   const summary = data?.summary;
   const memberProgress = data?.memberProgress || [];
   const updates = data?.updates || [];
-  const chats = data?.chats || [];
-
   const stats = useMemo(
     () => [
       {
@@ -236,29 +184,8 @@ const WorkspaceCollaboration = () => {
     );
   };
 
-  const submitChat = (event: FormEvent) => {
-    event.preventDefault();
-    if (!chatMessage.trim()) return;
-
-    mutate(
-      {
-        workspaceId,
-        data: { kind: "CHAT", message: chatMessage },
-      },
-      { onSuccess: () => setChatMessage("") }
-    );
-  };
-
   const handleDelete = (entryId: string) => {
     deleteEntry({ workspaceId, entryId });
-  };
-
-  const toggleSelectedChat = (entryId: string) => {
-    setSelectedChatIds((current) =>
-      current.includes(entryId)
-        ? current.filter((id) => id !== entryId)
-        : [...current, entryId]
-    );
   };
 
   const handleClear = (kind: "UPDATE" | "CHAT", window: "1h" | "24h" | "7d") => {
@@ -325,75 +252,13 @@ const WorkspaceCollaboration = () => {
 
           <div className="grid min-h-[480px] gap-4 xl:grid-cols-[1.1fr_0.9fr]">
             <div className="flex min-h-[480px] flex-col rounded-lg border bg-background/70 p-3 shadow-sm">
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  <h3 className="text-sm font-semibold">Workspace chat</h3>
-                </div>
-                <div className="flex gap-0.5">
-                  {selectedChatIds.length > 0 && (
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      disabled={isDeletingSelected}
-                      className="h-7 px-2 text-[10px]"
-                      onClick={() => deleteSelectedChats()}
-                    >
-                      Delete {selectedChatIds.length}
-                    </Button>
-                  )}
-                  {(["1h", "24h", "7d"] as const).map((window) => (
-                    <Button
-                      key={window}
-                      size="sm"
-                      variant="outline"
-                      disabled={isClearing}
-                      className="h-7 text-[10px] px-2"
-                      onClick={() => handleClear("CHAT", window)}
-                    >
-                      Clear {window}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-              <div className="grid flex-1 content-start gap-2 overflow-auto rounded-lg bg-muted/20 p-2.5">
-                <AnimatePresence initial={false}>
-                  {chats.map((entry, index) => (
-                    <div
-                      key={entry._id}
-                      className={`flex ${
-                        index % 2 === 0 ? "justify-start" : "justify-end"
-                      }`}
-                    >
-                      <EntryCard
-                        entry={entry}
-                        selectable
-                        selected={selectedChatIds.includes(entry._id)}
-                        onToggle={toggleSelectedChat}
-                      />
-                    </div>
-                  ))}
-                </AnimatePresence>
-                {chats.length === 0 && (
-                  <p className="text-sm text-muted-foreground">Start a team conversation.</p>
-                )}
-              </div>
-              <form onSubmit={submitChat} className="mt-3 flex gap-2">
-                <Input
-                  value={chatMessage}
-                  onChange={(event) => setChatMessage(event.target.value)}
-                  placeholder="Message the workspace"
-                />
-                <Button disabled={isPosting || !chatMessage.trim()} type="submit">
-                  <Send className="h-4 w-4" />
-                </Button>
-              </form>
+              <MemberChat />
             </div>
 
             <div className="grid gap-5">
               <div className="rounded-lg border bg-background/70 p-3 shadow-sm">
                 <h3 className="mb-2 text-sm font-semibold">Update panel</h3>
-                <div className="grid gap-2">
+                <div className="max-h-[320px] grid gap-2 overflow-y-auto pr-1 scrollbar-dashboard">
                   {memberProgress.map((member) => {
                     const name = member.user?.name || "Unknown";
                     return (

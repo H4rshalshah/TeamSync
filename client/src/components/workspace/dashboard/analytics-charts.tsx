@@ -929,7 +929,7 @@ const AnalyticsCharts = () => {
             <h3 className="font-semibold">Tasks by Project</h3>
           </div>
           {projectData.length > 0 ? (
-            <div className="space-y-3">
+            <div className="max-h-[280px] space-y-3 overflow-y-auto pr-1 scrollbar-dashboard">
               {projectData.map((project, index) => (
                 <motion.div
                   key={`${project.name}-${index}`}
@@ -993,7 +993,7 @@ const AnalyticsCharts = () => {
           )}
         </AnimatedCard>
 
-        <AnimatedCard>
+        <AnimatedCard className="self-start">
           <div className="mb-4 flex items-center gap-2">
             <Activity className="h-4 w-4 text-primary" />
             <h3 className="font-semibold">Task Velocity (14 days)</h3>
@@ -1026,44 +1026,46 @@ const AnalyticsCharts = () => {
               </p>
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {memberProgress.map((member, index) => (
-              <motion.div
-                key={member.memberId}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.08, type: "spring", stiffness: 100 }}
-                className="group rounded-lg border bg-muted/20 p-3.5 transition-all duration-200 hover:border-primary/20 hover:bg-muted/40 hover:shadow-sm"
-              >
-                <div className="mb-2.5 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                    <span className="text-sm font-semibold">
-                      {member.user?.name?.split(" ")[0] || "Unknown"}
+          <div className="max-h-[260px] overflow-y-auto pr-1 scrollbar-dashboard">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {memberProgress.map((member, index) => (
+                <motion.div
+                  key={member.memberId}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.08, type: "spring", stiffness: 100 }}
+                  className="group rounded-lg border bg-muted/20 p-3.5 transition-all duration-200 hover:border-primary/20 hover:bg-muted/40 hover:shadow-sm"
+                >
+                  <div className="mb-2.5 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                      <span className="text-sm font-semibold">
+                        {member.user?.name?.split(" ")[0] || "Unknown"}
+                      </span>
+                    </div>
+                    <span className="rounded-full bg-muted/60 px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                      {member.completedTasks}/{member.assignedTasks}
                     </span>
                   </div>
-                  <span className="rounded-full bg-muted/60 px-2 py-0.5 text-xs font-medium text-muted-foreground">
-                    {member.completedTasks}/{member.assignedTasks}
-                  </span>
-                </div>
-                <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                  <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${member.progress}%` }}
-                    transition={{
-                      duration: 1.2,
-                      delay: index * 0.1,
-                      ease: "easeOut",
-                    }}
-                  />
-                </div>
-                <div className="mt-1.5 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{member.progress}%</span>
-                  <span>{member.remainingTasks} remaining</span>
-                </div>
-              </motion.div>
-            ))}
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                    <motion.div
+                      className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${member.progress}%` }}
+                      transition={{
+                        duration: 1.2,
+                        delay: index * 0.1,
+                        ease: "easeOut",
+                      }}
+                    />
+                  </div>
+                  <div className="mt-1.5 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{member.progress}%</span>
+                    <span>{member.remainingTasks} remaining</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </AnimatedCard>
       )}

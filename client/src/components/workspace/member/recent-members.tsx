@@ -21,7 +21,7 @@ const RecentMembers = () => {
         />
       ) : null}
 
-      <ul role="list" className="space-y-2">
+      <ul role="list" className="max-h-[300px] space-y-2 overflow-y-auto pr-1 scrollbar-dashboard">
         {members.map((member, index) => {
           const name = member?.userId?.name || "";
           const initials = getAvatarFallbackText(name);

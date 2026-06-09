@@ -18,6 +18,7 @@ import {
   updateTaskService,
 } from "../services/task.service";
 import { HTTPSTATUS } from "../config/http.config";
+import { emitWorkspaceEvent } from "../socket";
 
 export const createTaskController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -36,6 +37,15 @@ export const createTaskController = asyncHandler(
       userId,
       body
     );
+
+    // Real-time sync: notify all workspace members
+    const io = req.app.get("io");
+    if (io) {
+      emitWorkspaceEvent(io, workspaceId, "task:created", {
+        workspaceId,
+        task,
+      });
+    }
 
     return res.status(HTTPSTATUS.OK).json({
       message: "Task created successfully",
@@ -63,6 +73,16 @@ export const updateTaskController = asyncHandler(
       taskId,
       body
     );
+
+    // Real-time sync: notify all workspace members
+    const io = req.app.get("io");
+    if (io) {
+      emitWorkspaceEvent(io, workspaceId, "task:updated", {
+        workspaceId,
+        projectId,
+        task: updatedTask,
+      });
+    }
 
     return res.status(HTTPSTATUS.OK).json({
       message: "Task updated successfully",
@@ -140,6 +160,15 @@ export const deleteTaskController = asyncHandler(
     roleGuard(role, [Permissions.DELETE_TASK]);
 
     await deleteTaskService(workspaceId, taskId);
+
+    // Real-time sync: notify all workspace members
+    const io = req.app.get("io");
+    if (io) {
+      emitWorkspaceEvent(io, workspaceId, "task:deleted", {
+        workspaceId,
+        taskId,
+      });
+    }
 
     return res.status(HTTPSTATUS.OK).json({
       message: "Task deleted successfully",

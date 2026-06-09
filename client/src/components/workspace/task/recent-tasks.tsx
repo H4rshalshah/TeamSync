@@ -49,7 +49,7 @@ const RecentTasks = () => {
         </div>
       )}
 
-      <ul role="list" className="divide-y divide-border">
+      <ul role="list" className="max-h-[300px] divide-y divide-border overflow-y-auto pr-1 scrollbar-dashboard">
         {tasks.map((task) => {
           const name = task?.assignedTo?.name || "";
           const initials = getAvatarFallbackText(name);

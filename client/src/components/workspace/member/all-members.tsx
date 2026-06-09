@@ -113,7 +113,7 @@ const AllMembers = () => {
   };
 
   return (
-    <div className="grid gap-6 pt-2">
+    <div className="grid max-h-[420px] gap-6 overflow-y-auto pr-1 pt-2 scrollbar-dashboard">
       {isPending ? (
         <Loader className="w-8 h-8 animate-spin place-self-center flex" />
       ) : null}
