@@ -4,6 +4,7 @@ import { NuqsAdapter } from "nuqs/adapters/react";
 
 import "./index.css";
 import "./dashboard-scrollbar.css";
+import "./network-section.css";
 import App from "./App.tsx";
 import QueryProvider from "./context/query-provider.tsx";
 import { Toaster } from "./components/ui/toaster.tsx";

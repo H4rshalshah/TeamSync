@@ -278,7 +278,7 @@ const Landing = () => {
       const activeRange = viewportHeight * 0.64;
       const progress = Math.max(0, Math.min(1, 1 - distanceFromCenter / activeRange));
       element.style.setProperty("--network-progress", progress.toString());
-      element.style.setProperty("--network-offset", `${1180 * (1 - progress)}`);
+      element.style.setProperty("--network-offset", `${600 * (1 - progress)}`);
       element.style.setProperty("--network-line-opacity", progress > 0.06 ? progress.toString() : "0");
     };
 
@@ -524,14 +524,14 @@ const Landing = () => {
               preserveAspectRatio="none"
               aria-hidden="true"
             >
-              <path d="M590 306 V128" />
-              <path d="M590 306 C535 178 455 178 310 178" />
-              <path d="M590 306 C645 178 725 178 870 178" />
-              <path d="M590 306 H310" />
-              <path d="M590 306 H870" />
-              <path d="M590 306 C535 442 455 442 310 442" />
-              <path d="M590 306 C645 442 725 442 870 442" />
-              <path d="M590 306 V492" />
+              <path d="M590 306 V36" />
+              <path d="M590 306 C535 220 420 220 78 154" />
+              <path d="M590 306 C645 220 760 220 1102 154" />
+              <path d="M590 306 H78" />
+              <path d="M590 306 H1102" />
+              <path d="M590 306 C535 395 420 395 78 464" />
+              <path d="M590 306 C645 395 760 395 1102 464" />
+              <path d="M590 306 V584" />
             </svg>
 
             <div className="network-hub-core" aria-hidden="true">
