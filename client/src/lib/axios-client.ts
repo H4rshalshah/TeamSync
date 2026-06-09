@@ -23,7 +23,8 @@ const isPublicAuthPage = (pathname: string) =>
   pathname === "/sign-in" ||
   pathname === "/sign-up" ||
   pathname === "/forgot-password" ||
-  pathname.startsWith("/reset-password/");
+  pathname.startsWith("/reset-password/") ||
+  pathname.startsWith("/invite/workspace/");
 
 API.interceptors.response.use(
   (response) => {
