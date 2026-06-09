@@ -250,12 +250,12 @@ const WorkspaceCollaboration = () => {
             <ProgressBar value={summary?.progress || 0} />
           </div>
 
-          <div className="grid min-h-[480px] gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-            <div className="flex min-h-[480px] flex-col rounded-lg border bg-background/70 p-3 shadow-sm">
+          <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+            <div className="flex h-[520px] flex-col rounded-lg border bg-background/70 p-3 shadow-sm">
               <MemberChat />
             </div>
 
-            <div className="grid gap-5">
+            <div className="grid gap-5 xl:max-h-[520px] xl:overflow-y-auto">
               <div className="rounded-lg border bg-background/70 p-3 shadow-sm">
                 <h3 className="mb-2 text-sm font-semibold">Update panel</h3>
                 <div className="max-h-[320px] grid gap-2 overflow-y-auto pr-1 scrollbar-dashboard">

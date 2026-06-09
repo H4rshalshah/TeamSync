@@ -419,7 +419,7 @@ const DashboardChat = () => {
 
   // ── Render ─────────────────────────────────────────────
   return (
-    <div className="flex h-full flex-col">
+    <div className="relative flex h-full flex-col">
       {/* Chat Header */}
       <div className="mb-2 flex items-center gap-1.5 border-b pb-1.5">
         <div className="relative">

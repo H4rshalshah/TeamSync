@@ -923,14 +923,14 @@ const AnalyticsCharts = () => {
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2">
-        <AnimatedCard>
+        <AnimatedCard className="h-[340px]">
           <div className="mb-4 flex items-center gap-2">
             <Layers className="h-4 w-4 text-primary" />
             <h3 className="font-semibold">Tasks by Project</h3>
           </div>
           {projectData.length > 0 ? (
-            <div className="max-h-[280px] space-y-3 overflow-y-auto pr-1 scrollbar-dashboard">
-              {projectData.map((project, index) => (
+            <div className="h-[calc(100%-40px)] space-y-3 overflow-y-auto pr-1 scrollbar-dashboard">
+              {projectData.slice(0, 3).map((project, index) => (
                 <motion.div
                   key={`${project.name}-${index}`}
                   initial={{ opacity: 0, x: -14 }}
@@ -993,20 +993,20 @@ const AnalyticsCharts = () => {
           )}
         </AnimatedCard>
 
-        <AnimatedCard className="self-start">
+        <AnimatedCard className="h-[340px]">
           <div className="mb-4 flex items-center gap-2">
             <Activity className="h-4 w-4 text-primary" />
             <h3 className="font-semibold">Task Velocity (14 days)</h3>
           </div>
           {trendData.length > 0 ? (
             <div
-              className="dashboard-chart-frame h-64 min-h-[256px] w-full"
+              className="dashboard-chart-frame h-[calc(100%-40px)] min-h-0 w-full"
               key={trendChartKey}
             >
               <VelocityChart data={trendData} />
             </div>
           ) : (
-            <div className="dashboard-chart-frame h-64 min-h-[256px] w-full">
+            <div className="dashboard-chart-frame h-[calc(100%-40px)] min-h-0 w-full">
               <VelocityChart data={[]} />
             </div>
           )}
