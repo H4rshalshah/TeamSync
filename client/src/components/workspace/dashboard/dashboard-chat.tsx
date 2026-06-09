@@ -9,6 +9,8 @@ import {
   Wifi,
   WifiOff,
   Smile,
+  CheckCheck,
+  Clock,
 } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -24,6 +26,42 @@ import {
 import { useSocket } from "@/context/socket-provider";
 import { useAuthContext } from "@/context/auth-provider";
 import EmojiPickerComponent from "@/components/emoji-picker";
+import type { CollaborationEntryType } from "@/types/api.type";
+
+// ─── Helpers ───────────────────────────────────────────────
+
+const formatTime = (date: Date) => {
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+  const ampm = hours >= 12 ? "PM" : "AM";
+  const h12 = hours % 12 || 12;
+  return `${h12}:${minutes.toString().padStart(2, "0")} ${ampm}`;
+};
+
+const isSameDay = (a: Date, b: Date) =>
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
+
+const formatDateSeparator = (date: Date) => {
+  const now = new Date();
+  if (isSameDay(date, now)) return "Today";
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  if (isSameDay(date, yesterday)) return "Yesterday";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: date.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+  });
+};
+
+const chatQueryKey = (workspaceId: string) => [
+  "workspace-collaboration",
+  workspaceId,
+];
+
+// ─── Component ─────────────────────────────────────────────
 
 const DashboardChat = () => {
   const workspaceId = useWorkspaceId();
@@ -33,7 +71,6 @@ const DashboardChat = () => {
   const [chatMessage, setChatMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const prevChatsLengthRef = useRef(0);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isBrowserOnline, setIsBrowserOnline] = useState(
     typeof navigator === "undefined" ? true : navigator.onLine
@@ -41,33 +78,78 @@ const DashboardChat = () => {
   const isAtBottomRef = useRef(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const queryKey = chatQueryKey(workspaceId);
 
-  const queryKey = ["workspace-collaboration", workspaceId];
-
+  // ── Fetch chats ────────────────────────────────────────
   const { data, isPending } = useQuery({
     queryKey,
     queryFn: () => getWorkspaceCollaborationQueryFn(workspaceId),
     enabled: !!workspaceId,
-    refetchInterval: isConnected ? 60000 : 10000,
+    // Only poll when socket is disconnected
+    refetchInterval: isConnected ? false : 10000,
   });
 
+  const chats: CollaborationEntryType[] = data?.chats || [];
+  const isChatConnected = isConnected || isBrowserOnline;
+
+  // ── Optimistic mutation (instant send) ────────────────
   const { mutate, isPending: isPosting } = useMutation({
     mutationFn: createCollaborationEntryMutationFn,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey });
+    onMutate: async (payload) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey });
+
+      // Snapshot previous value
+      const previous = queryClient.getQueryData(queryKey);
+
+      // Optimistically add the message with a temp _id
+      const optimisticEntry: CollaborationEntryType = {
+        _id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        kind: "CHAT",
+        message: payload.data.message,
+        progress: null,
+        blocker: null,
+        author: {
+          _id: user?._id || "",
+          name: user?.name || "",
+          email: user?.email,
+          profilePicture: user?.profilePicture || null,
+        },
+        project: null,
+        task: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Append to cache
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          chats: [...(old.chats || []), optimisticEntry],
+        };
+      });
+
+      return { previous };
     },
-    onError: (error) => {
+    onError: (error, _variables, context) => {
+      // Rollback on error
+      if (context?.previous) {
+        queryClient.setQueryData(queryKey, context.previous);
+      }
       toast({
-        title: "Error",
+        title: "Failed to send",
         description: error.message,
         variant: "destructive",
       });
     },
+    onSettled: () => {
+      // Refetch after server responds to ensure consistency
+      queryClient.invalidateQueries({ queryKey });
+    },
   });
 
-  const chats = data?.chats || [];
-  const isChatConnected = isConnected || isBrowserOnline;
-
+  // ── Online state tracking ──────────────────────────────
   useEffect(() => {
     const updateOnlineState = () => setIsBrowserOnline(navigator.onLine);
     updateOnlineState();
@@ -79,6 +161,7 @@ const DashboardChat = () => {
     };
   }, []);
 
+  // ── Join/leave workspace room ──────────────────────────
   useEffect(() => {
     if (workspaceId && isConnected) {
       joinWorkspace(workspaceId);
@@ -90,37 +173,65 @@ const DashboardChat = () => {
     };
   }, [workspaceId, isConnected, joinWorkspace, leaveWorkspace]);
 
+  // ── Socket: new message from other users ───────────────
   useEffect(() => {
     if (!socket) return;
-    const handleNewEntry = () => {
-      queryClient.invalidateQueries({ queryKey });
+
+    const handleNewEntry = (entry: any) => {
+      // Only handle CHAT kind in this component
+      if (entry.kind !== "CHAT") return;
+
+      // If it's our own message, it's already in the cache via optimistic update
+      if (entry.author?._id === user?._id) {
+        // Replace the temp entry with the server-confirmed one
+        queryClient.setQueryData(queryKey, (old: any) => {
+          if (!old?.chats) return old;
+          const chats = old.chats.map((c: any) =>
+            c._id?.startsWith("temp-") && c.author?._id === user?._id
+              ? { ...entry, _id: entry._id }
+              : c
+          );
+          return { ...old, chats };
+        });
+        return;
+      }
+
+      // New message from someone else — append to cache
+      queryClient.setQueryData(queryKey, (old: any) => {
+        if (!old) return old;
+        // Don't add duplicates
+        if (old.chats?.some((c: any) => c._id === entry._id)) return old;
+        return {
+          ...old,
+          chats: [...(old.chats || []), entry],
+        };
+      });
+
+      // Unread count if not at bottom
       if (!isAtBottomRef.current) {
         setUnreadCount((prev) => prev + 1);
       }
     };
+
     socket.on("collaboration:new", handleNewEntry);
     return () => {
       socket.off("collaboration:new", handleNewEntry);
     };
-  }, [socket, queryClient, queryKey]);
+  }, [socket, queryClient, queryKey, user?._id]);
 
-  useEffect(() => {
-    if (chats.length > prevChatsLengthRef.current) {
-      const newMessagesCount = chats.length - prevChatsLengthRef.current;
-      if (!isAtBottomRef.current) {
-        setUnreadCount((prev) => prev + newMessagesCount);
-      }
-    }
-    prevChatsLengthRef.current = chats.length;
-  }, [chats.length]);
-
+  // ── Scroll to bottom when new messages arrive ──────────
   useEffect(() => {
     if (isAtBottomRef.current && scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      // Use requestAnimationFrame to wait for DOM update
+      requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      });
     }
-  }, [chats]);
+  }, [chats.length]);
 
-  // Close emoji picker when clicking outside
+  // ── Close emoji picker on outside click ────────────────
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -134,6 +245,7 @@ const DashboardChat = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // ── Scroll / unread handlers ───────────────────────────
   const handleScroll = useCallback(() => {
     if (!scrollRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
@@ -157,27 +269,24 @@ const DashboardChat = () => {
     inputRef.current?.focus();
   };
 
+  // ── Submit ─────────────────────────────────────────────
   const submitChat = (event: FormEvent) => {
     event.preventDefault();
     if (!chatMessage.trim()) return;
 
-    mutate(
-      {
-        workspaceId,
-        data: {
-          kind: "CHAT",
-          message: chatMessage,
-        },
+    const message = chatMessage;
+    setChatMessage("");
+    setShowEmojiPicker(false);
+    isAtBottomRef.current = true;
+    setUnreadCount(0);
+
+    mutate({
+      workspaceId,
+      data: {
+        kind: "CHAT",
+        message,
       },
-      {
-        onSuccess: () => {
-          setChatMessage("");
-          setShowEmojiPicker(false);
-          isAtBottomRef.current = true;
-          setUnreadCount(0);
-        },
-      }
-    );
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -187,9 +296,132 @@ const DashboardChat = () => {
     }
   };
 
+  // ── Render helpers ─────────────────────────────────────
+  const renderMessage = (entry: CollaborationEntryType, idx: number) => {
+    const isOwn = entry.author?._id === user?._id;
+    const isTemp = entry._id?.startsWith("temp-");
+
+    // Group consecutive messages from the same author
+    const prevEntry = idx > 0 ? chats[idx - 1] : null;
+    const nextEntry = idx < chats.length - 1 ? chats[idx + 1] : null;
+    const isFirstInGroup =
+      !prevEntry ||
+      prevEntry.author?._id !== entry.author?._id;
+    const isLastInGroup =
+      !nextEntry ||
+      nextEntry.author?._id !== entry.author?._id;
+
+    // Date separator
+    const showDateSeparator = (() => {
+      if (idx === 0) return true;
+      const current = new Date(entry.createdAt);
+      const prev = new Date(prevEntry!.createdAt);
+      return !isSameDay(current, prev);
+    })();
+
+    return (
+      <div key={entry._id}>
+        {/* Date separator */}
+        {showDateSeparator && (
+          <div className="flex justify-center py-3">
+            <span className="rounded-full bg-muted/80 px-3 py-1 text-[11px] font-medium text-muted-foreground shadow-xs">
+              {formatDateSeparator(new Date(entry.createdAt))}
+            </span>
+          </div>
+        )}
+
+        <motion.div
+          initial={{ opacity: 0, y: 10, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{
+            type: "spring",
+            stiffness: 250,
+            damping: 24,
+            mass: 0.5,
+          }}
+          className={`flex items-end gap-1.5 px-1 ${
+            isOwn ? "flex-row-reverse" : ""
+          } ${isFirstInGroup ? "mt-1" : "mt-0.5"}`}
+        >
+          {/* Avatar column */}
+          <div className="w-7 flex-shrink-0 flex justify-center">
+            {!isOwn && isLastInGroup ? (
+              <Avatar className="h-7 w-7 ring-1 ring-border/30">
+                <AvatarImage
+                  src={entry.author?.profilePicture || ""}
+                  alt={entry.author?.name}
+                />
+                <AvatarFallback
+                  className={`text-[9px] font-semibold ${getAvatarColor(
+                    entry.author?.name || ""
+                  )}`}
+                >
+                  {getAvatarFallbackText(entry.author?.name || "U")}
+                </AvatarFallback>
+              </Avatar>
+            ) : (
+              <div className="h-7" />
+            )}
+          </div>
+
+          {/* Message content */}
+          <div className={`max-w-[82%] min-w-[60px] ${isOwn ? "items-end" : "items-start"} flex flex-col`}>
+            {/* Sender name for others */}
+            {!isOwn && isFirstInGroup && (
+              <span className="mb-0.5 ml-1 text-[10px] font-semibold text-primary/80">
+                {entry.author?.name?.split(" ")[0] || "Unknown"}
+              </span>
+            )}
+
+            {/* Bubble + tail */}
+            <div className="relative flex">
+              {/* Bubble */}
+              <div
+                className={`relative px-3 py-1.5 text-xs leading-relaxed break-words shadow-xs ${
+                  isOwn
+                    ? "bg-[#d9fdd3] dark:bg-[#005c4b] text-[#111b21] dark:text-[#e9edef] rounded-[8px] rounded-tr-[2px]"
+                    : "bg-[#ffffff] dark:bg-[#202c33] text-[#111b21] dark:text-[#e9edef] rounded-[8px] rounded-tl-[2px] border border-[#e0e0e0] dark:border-[#313d45]"
+                } ${isTemp ? "opacity-70" : ""}`}
+              >
+                <p className="whitespace-pre-wrap pr-1">{entry.message}</p>
+
+                {/* Timestamp + status row */}
+                <div
+                  className={`mt-0.5 flex items-center gap-1 ${
+                    isOwn ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <span
+                    className={`text-[10px] leading-none ${
+                      isOwn
+                        ? "text-[#667781] dark:text-[#aebac1]"
+                        : "text-[#667781] dark:text-[#aebac1]"
+                    }`}
+                  >
+                    {formatTime(new Date(entry.createdAt))}
+                  </span>
+                  {isOwn && (
+                    <span className="flex items-center">
+                      {isTemp ? (
+                        <Clock className="h-3 w-3 text-[#667781] dark:text-[#aebac1]" />
+                      ) : (
+                        <CheckCheck className="h-3.5 w-3.5 text-[#53bdeb]" />
+                      )}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    );
+  };
+
+  // ── Render ─────────────────────────────────────────────
   return (
     <div className="flex h-full flex-col">
-      {/* Chat Header - WhatsApp style */}
+      {/* Chat Header */}
       <div className="mb-2 flex items-center gap-1.5 border-b pb-1.5">
         <div className="relative">
           <MessageSquare className="h-3.5 w-3.5 text-primary" />
@@ -202,7 +434,7 @@ const DashboardChat = () => {
         <div className="flex-1">
           <h3 className="text-xs font-semibold">Team Chat</h3>
           <p className="text-[10px] text-muted-foreground">
-            {isChatConnected ? "Connected" : "Connecting..."}
+            {isChatConnected ? "Online" : "Connecting..."}
           </p>
         </div>
         {unreadCount > 0 && (
@@ -223,125 +455,37 @@ const DashboardChat = () => {
         </span>
       </div>
 
-      {/* Messages Area - WhatsApp style bubbles */}
+      {/* Messages Area */}
       <div
-        className="flex-1 overflow-y-auto pr-2"
+        className="flex-1 overflow-y-auto pr-1"
         ref={scrollRef}
         onScroll={handleScroll}
       >
         {isPending ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader className="h-5 w-5 animate-spin text-muted-foreground" />
+          <div className="flex items-center justify-center py-12">
+            <div className="flex flex-col items-center gap-2">
+              <Loader className="h-5 w-5 animate-spin text-muted-foreground/60" />
+              <span className="text-[11px] text-muted-foreground/50">
+                Loading messages...
+              </span>
+            </div>
           </div>
         ) : chats.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="mb-2 rounded-full bg-muted p-2">
-              <MessageSquare className="h-4 w-4 text-muted-foreground/50" />
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="mb-3 rounded-full bg-muted p-3">
+              <MessageSquare className="h-5 w-5 text-muted-foreground/40" />
             </div>
-            <p className="text-xs font-medium text-muted-foreground">
+            <p className="text-sm font-medium text-muted-foreground/80">
               No messages yet
             </p>
-            <p className="text-[11px] text-muted-foreground/70">
-              Say hello to your team!
+            <p className="text-xs text-muted-foreground/60 mt-1">
+              Send a message to start the conversation
             </p>
           </div>
         ) : (
-          <div className="space-y-1.5">
+          <div className="pb-1">
             <AnimatePresence initial={false}>
-              {chats.map((entry, idx) => {
-                const isOwn = entry.author?._id === user?._id;
-                const showAvatar =
-                  idx === 0 ||
-                  chats[idx - 1]?.author?._id !== entry.author?._id;
-                const prevEntry = idx > 0 ? chats[idx - 1] : null;
-                const showTimestamp =
-                  !prevEntry ||
-                  new Date(entry.createdAt).getTime() -
-                    new Date(prevEntry.createdAt).getTime() >
-                    300000; // 5 mins
-
-                return (
-                  <div key={entry._id}>
-                    {/* Timestamp separator */}
-                    {showTimestamp && (
-                      <div className="flex justify-center py-2">
-                        <span className="rounded-full bg-muted/70 px-3 py-1 text-[10px] text-muted-foreground">
-                          {formatDistanceToNow(new Date(entry.createdAt), {
-                            addSuffix: true,
-                          })}
-                        </span>
-                      </div>
-                    )}
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 200,
-                        damping: 22,
-                      }}
-                      className={`flex items-end gap-1.5 ${
-                        isOwn ? "flex-row-reverse" : ""
-                      }`}
-                    >
-                      {/* Avatar - only show for first message in a group or different author */}
-                      {showAvatar && !isOwn ? (
-                        <Avatar className="mb-1 h-7 w-7 flex-shrink-0">
-                          <AvatarImage
-                            src={entry.author?.profilePicture || ""}
-                            alt={entry.author?.name}
-                          />
-                          <AvatarFallback
-                            className={`text-[10px] ${getAvatarColor(
-                              entry.author?.name || ""
-                            )}`}
-                          >
-                            {getAvatarFallbackText(
-                              entry.author?.name || "U"
-                            )}
-                          </AvatarFallback>
-                        </Avatar>
-                      ) : (
-                        <div className="w-7" />
-                      )}
-
-                      {/* Message Bubble - WhatsApp style */}
-                      <div
-                        className={`group max-w-[88%] rounded-2xl px-3 py-1.5 ${
-                          isOwn
-                            ? "rounded-br-md bg-primary/15 text-foreground"
-                            : "rounded-bl-md bg-muted/70 text-foreground"
-                        }`}
-                      >
-                        {/* Sender name for others' messages */}
-                        {showAvatar && !isOwn && (
-                          <p className="mb-0.5 text-[10px] font-semibold text-primary">
-                            {entry.author?.name?.split(" ")[0] || "Unknown"}
-                          </p>
-                        )}
-                        <p className="text-xs leading-relaxed break-words">
-                          {entry.message}
-                        </p>
-                        {/* Timestamp - WhatsApp style at bottom */}
-                        <div
-                          className={`mt-0.5 flex items-center gap-1 ${
-                            isOwn ? "justify-end" : "justify-start"
-                          }`}
-                        >
-                          <span className="text-[10px] text-muted-foreground/60">
-                            {format(new Date(entry.createdAt), "h:mm a")}
-                          </span>
-                          {isOwn && (
-                            <span className="text-[10px] text-muted-foreground/40">
-                              ✓✓
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  </div>
-                );
-              })}
+              {chats.map((entry, idx) => renderMessage(entry, idx))}
             </AnimatePresence>
           </div>
         )}
@@ -366,10 +510,10 @@ const DashboardChat = () => {
         </motion.div>
       )}
 
-      {/* Message Input - WhatsApp style */}
+      {/* Message Input */}
       <form
         onSubmit={submitChat}
-        className="mt-2 flex items-end gap-1.5 border-t pt-1.5"
+        className="mt-2 flex items-end gap-1.5 border-t pt-2"
       >
         <div className="relative flex-1">
           <input
@@ -378,7 +522,8 @@ const DashboardChat = () => {
             onChange={(event) => setChatMessage(event.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
-            className="w-full rounded-full border border-input bg-muted/50 px-3.5 py-2 pr-9 text-xs outline-none transition-colors focus:border-primary/50 focus:bg-background focus:ring-1 focus:ring-primary/20"
+            disabled={isPosting}
+            className="w-full rounded-full border border-input bg-muted/50 px-3.5 py-2.5 pr-10 text-xs outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary/50 focus:bg-background focus:ring-1 focus:ring-primary/20 disabled:opacity-60"
           />
           <button
             type="button"
@@ -389,16 +534,12 @@ const DashboardChat = () => {
           </button>
         </div>
         <Button
-          disabled={isPosting || !chatMessage.trim()}
+          disabled={!chatMessage.trim()}
           type="submit"
           size="icon"
-          className="h-8 w-8 shrink-0 rounded-full"
+          className="h-9 w-9 shrink-0 rounded-full"
         >
-          {isPosting ? (
-            <Loader className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Send className="h-3.5 w-3.5" />
-          )}
+          <Send className="h-4 w-4" />
         </Button>
       </form>
 
@@ -423,15 +564,3 @@ const DashboardChat = () => {
 };
 
 export default DashboardChat;
-
-// Helper function for formatting time
-function format(date: Date, formatStr: string) {
-  const hours = date.getHours();
-  const minutes = date.getMinutes();
-  const ampm = hours >= 12 ? "PM" : "AM";
-  const h12 = hours % 12 || 12;
-  if (formatStr === "h:mm a") {
-    return `${h12}:${minutes.toString().padStart(2, "0")} ${ampm}`;
-  }
-  return `${h12}:${minutes.toString().padStart(2, "0")} ${ampm}`;
-}
