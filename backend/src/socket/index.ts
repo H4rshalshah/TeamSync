@@ -11,7 +11,7 @@ const sessionMiddleware = session({
   maxAge: 24 * 60 * 60 * 1000,
   secure: config.NODE_ENV === "production",
   httpOnly: true,
-  sameSite: "lax",
+  sameSite: config.NODE_ENV === "production" ? "none" : "lax",
 });
 
 // Wrap session + passport for socket.io handshake
@@ -22,12 +22,20 @@ export const setupSocket = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
     cors: {
       origin: (origin, callback) => {
-        const allowedOrigins = [
-          config.FRONTEND_ORIGIN,
+        const allowedOrigins = config.FRONTEND_ORIGIN.split(",")
+          .map((item) => item.trim())
+          .filter(Boolean);
+        const localOrigins = [
           "http://localhost:3000",
           "http://127.0.0.1:3000",
         ];
-        if (!origin || allowedOrigins.includes(origin)) {
+        const allAllowedOrigins = [...allowedOrigins, ...localOrigins];
+
+        if (
+          !origin ||
+          allAllowedOrigins.includes(origin) ||
+          /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(origin)
+        ) {
           return callback(null, true);
         }
         return callback(null, false);
