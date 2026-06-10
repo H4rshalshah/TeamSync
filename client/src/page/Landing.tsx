@@ -278,8 +278,8 @@ const Landing = () => {
       const activeRange = viewportHeight * 0.64;
       const progress = Math.max(0, Math.min(1, 1 - distanceFromCenter / activeRange));
       element.style.setProperty("--network-progress", progress.toString());
-      element.style.setProperty("--network-offset", `${600 * (1 - progress)}`);
-      element.style.setProperty("--network-line-opacity", progress > 0.06 ? progress.toString() : "0");
+      element.style.setProperty("--network-offset", `${800 * (1 - progress)}`);
+      element.style.setProperty("--network-line-opacity", progress > 0.02 ? progress.toString() : "0");
     };
 
     updateNetworkProgress();
@@ -524,14 +524,14 @@ const Landing = () => {
               preserveAspectRatio="none"
               aria-hidden="true"
             >
-              <path d="M590 306 V36" />
-              <path d="M590 306 C535 220 420 220 78 154" />
-              <path d="M590 306 C645 220 760 220 1102 154" />
-              <path d="M590 306 H78" />
-              <path d="M590 306 H1102" />
-              <path d="M590 306 C535 395 420 395 78 464" />
-              <path d="M590 306 C645 395 760 395 1102 464" />
-              <path d="M590 306 V584" />
+              <path d="M590 306 V89" />
+              <path d="M590 306 C535 220 420 220 313 206" />
+              <path d="M590 306 C645 220 760 220 867 206" />
+              <path d="M590 306 H313" />
+              <path d="M590 306 H867" />
+              <path d="M590 306 C535 395 420 395 313 516" />
+              <path d="M590 306 C645 395 760 395 867 516" />
+              <path d="M590 306 V531" />
             </svg>
 
             <div className="network-hub-core" aria-hidden="true">
@@ -540,7 +540,6 @@ const Landing = () => {
 
             <div className="network-pill network-pill-brief">Project brief</div>
             <div className="network-pill network-pill-workspace">
-              <span className="network-pill-icon">✓</span>
               Workspace
             </div>
             <div className="network-pill network-pill-invite">Invite members</div>
@@ -548,7 +547,6 @@ const Landing = () => {
             <div className="network-pill network-pill-review">Owner review</div>
             <div className="network-pill network-pill-reports">Reports</div>
             <div className="network-pill network-pill-analytics">
-              <span className="network-pill-icon">+</span>
               Analytics
             </div>
             <div className="network-pill network-pill-status">Status updates</div>
