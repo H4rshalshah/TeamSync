@@ -7,6 +7,7 @@ import RoleModel from "../models/roles-permission.model";
 import { Roles } from "../enums/role.enum";
 import {
   BadRequestException,
+  InternalServerException,
   NotFoundException,
   UnauthorizedException,
 } from "../utils/appError";
@@ -418,21 +419,36 @@ export const requestPasswordResetService = async (email: string) => {
 
   const resetUrl = `${getFrontendOrigin()}/reset-password/${token}`;
 
-  // Fire email asynchronously — don't block the response on SMTP
-  if (isSmtpConfigured()) {
-    sendPasswordResetEmail({
+  if (!isSmtpConfigured()) {
+    console.warn(
+      "[ForgotPassword] SMTP not configured — password reset token saved but no email will be sent."
+    );
+    // In development, return the reset URL so it can be displayed in the UI
+    // In production, the admin must set SMTP env vars or use the console to retrieve the link
+    return {
+      emailSent: false,
+      resetUrl: config.NODE_ENV !== "production" ? resetUrl : undefined,
+    };
+  }
+
+  try {
+    const emailSent = await sendPasswordResetEmail({
       to: user.email,
       name: user.name,
       resetUrl,
-    }).catch((err) => {
-      console.error("[ForgotPassword] Failed to send reset email:", err);
     });
-  }
 
-  return {
-    emailSent: false,
-    resetUrl: !isSmtpConfigured() && config.NODE_ENV !== "production" ? resetUrl : undefined,
-  };
+    return {
+      emailSent: true,
+      resetUrl:
+        config.NODE_ENV !== "production" && !emailSent ? resetUrl : undefined,
+    };
+  } catch (error) {
+    console.error("[ForgotPassword] Failed to send reset email:", error);
+    throw new InternalServerException(
+      "We could not send the password reset email at this time. Please ensure SMTP is configured or try again later."
+    );
+  }
 };
 
 export const resetPasswordService = async ({

@@ -8,6 +8,7 @@ import {
   registerSchema,
   resetPasswordSchema,
 } from "../validation/auth.validation";
+import { isSmtpConfigured } from "../utils/mailer";
 import { HTTPSTATUS } from "../config/http.config";
 import {
   loginOrCreateAccountService,
@@ -232,9 +233,25 @@ export const forgotPasswordController = asyncHandler(
     const body = forgotPasswordSchema.parse(req.body);
     const result = await requestPasswordResetService(body.email);
 
+    if (!isSmtpConfigured()) {
+      if (config.NODE_ENV === "production") {
+        return res.status(HTTPSTATUS.OK).json({
+          message:
+            "SMTP is not configured. Please contact the admin to enable email delivery, or try again later.",
+          resetUrl: undefined,
+        });
+      }
+      return res.status(HTTPSTATUS.OK).json({
+        message:
+          "SMTP is not configured. Use the reset link below (dev-only).",
+        resetUrl: result.resetUrl,
+      });
+    }
+
     return res.status(HTTPSTATUS.OK).json({
-      message:
-        "If this email is registered, a password reset link has been sent.",
+      message: result.emailSent
+        ? "A password reset link has been sent to your email."
+        : "If this email is registered, a password reset link has been sent.",
       resetUrl: result.resetUrl,
     });
   }
