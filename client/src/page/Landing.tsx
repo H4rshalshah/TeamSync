@@ -406,16 +406,15 @@ const Landing = () => {
             <p className="text-sm font-semibold uppercase text-[#2f6f4e]">
               Project Command View
             </p>
-            <h2 className="mt-3 text-4xl font-semibold tracking-normal sm:text-6xl max-w-3xl">
+            <h2 className="mt-3 text-4xl font-semibold tracking-normal sm:text-6xl">
               See members, tasks, and delivery status in one structured view.
             </h2>
-            <p className="mt-5 max-w-2xl text-lg leading-8 text-[#171512]/65">
-              A workspace should show who is involved, what is assigned, where
-              work is blocked, and which projects are ready for review.
+            <p className="mt-5 max-w-4xl text-lg leading-8 text-[#171512]/65">
+              A workspace should show who is involved, what is assigned, where work is blocked, and which projects are ready for review.
             </p>
           </div>
 
-          <div className="sphinx-reveal team-meeting-visual command-center-visual mt-14 max-w-5xl" aria-hidden="true">
+          <div className="sphinx-reveal team-meeting-visual command-center-visual mt-14 mx-auto max-w-5xl" aria-hidden="true">
             <div className="command-center-card">
               <div className="command-center-header">
                 <div>
