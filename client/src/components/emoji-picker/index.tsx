@@ -3,6 +3,7 @@ import React from "react";
 import Picker from "@emoji-mart/react";
 import data from "@emoji-mart/data";
 import { customEmojis } from "./custom-emojis";
+import { useTheme } from "@/context/theme-provider";
 
 interface EmojiPickerComponentProps {
   onSelectEmoji: (emoji: string) => void;
@@ -11,26 +12,23 @@ interface EmojiPickerComponentProps {
 const EmojiPickerComponent: React.FC<EmojiPickerComponentProps> = ({
   onSelectEmoji,
 }) => {
+  const { theme } = useTheme();
+
   // Handle emoji selection
   const handleEmojiSelect = (emoji: { native: string }) => {
-    console.log(emoji, "emoji");
-    onSelectEmoji(emoji.native); // Pass the selected emoji to parent component
+    onSelectEmoji(emoji.native);
   };
 
   return (
-    <div className="relative w-full !max-w-8">
+    <div className="emoji-picker-wrapper">
       <Picker
         data={data}
         custom={customEmojis}
         categories={[
           "activity",
-          // 'flags',
-          // 'foods',
-          // 'frequent',
           "objects",
           "people",
           "places",
-          // 'symbols',
         ]}
         categoryIcons={{
           project_management: {
@@ -44,12 +42,10 @@ const EmojiPickerComponent: React.FC<EmojiPickerComponentProps> = ({
         emojiSize={20}
         showPreview={false}
         showSkinTones={false}
-        theme="light"
+        theme={theme}
         navPosition="top"
         maxFrequentRows={0}
-        //emojiButtonSize={30}
         emojiButtonColors={["rgba(102, 51, 153, .2)"]}
-        className=" h-[40px]"
       />
     </div>
   );

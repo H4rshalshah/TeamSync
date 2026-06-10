@@ -75,6 +75,17 @@ const MemberChat = () => {
   const { socket, isConnected, joinWorkspace, leaveWorkspace } = useSocket();
   const [chatMessage, setChatMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [emojiPickerPosition, setEmojiPickerPosition] = useState<{
+    top: string;
+    bottom: string;
+    left: string;
+    right: string;
+  }>({
+    top: "auto",
+    bottom: "80px",
+    left: "auto",
+    right: "0px",
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isBrowserOnline, setIsBrowserOnline] = useState(
@@ -83,6 +94,7 @@ const MemberChat = () => {
   const isAtBottomRef = useRef(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const queryKey = chatQueryKey(workspaceId);
 
   // Selection state for delete
@@ -291,6 +303,47 @@ const MemberChat = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // ── Smart emoji picker position ────────────────────
+  useEffect(() => {
+    if (!showEmojiPicker || !emojiButtonRef.current) return;
+    const buttonRect = emojiButtonRef.current.getBoundingClientRect();
+    const pickerWidth = 350;
+    const pickerHeight = 400;
+    const gap = 8;
+
+    const rightSpace = window.innerWidth - buttonRect.right;
+    const leftSpace = buttonRect.left;
+    const spaceAbove = buttonRect.top;
+    const spaceBelow = window.innerHeight - buttonRect.bottom;
+
+    const position: typeof emojiPickerPosition = {
+      top: "auto",
+      bottom: "auto",
+      left: "auto",
+      right: "auto",
+    };
+
+    // Horizontal: prefer right, flip to left if not enough space
+    if (rightSpace >= pickerWidth) {
+      position.left = `${buttonRect.right - pickerWidth + 16}px`;
+    } else if (leftSpace >= pickerWidth) {
+      position.left = `${buttonRect.left}px`;
+    } else {
+      position.right = "16px";
+    }
+
+    // Vertical: prefer above, flip to below if not enough space above
+    if (spaceAbove >= pickerHeight) {
+      position.bottom = `${window.innerHeight - buttonRect.top + gap}px`;
+    } else if (spaceBelow >= pickerHeight) {
+      position.top = `${buttonRect.bottom + gap}px`;
+    } else {
+      position.bottom = `${window.innerHeight - buttonRect.top + gap}px`;
+    }
+
+    setEmojiPickerPosition(position);
+  }, [showEmojiPicker]);
 
   // ── Scroll / unread handlers ───────────────────────────
   const handleScroll = useCallback(() => {
@@ -656,6 +709,7 @@ const MemberChat = () => {
             className="w-full rounded-full border border-input bg-muted/50 px-3.5 py-2.5 pr-10 text-xs outline-none transition-colors placeholder:text-muted-foreground/50 focus:border-primary/50 focus:bg-background focus:ring-1 focus:ring-primary/20 disabled:opacity-60"
           />
           <button
+            ref={emojiButtonRef}
             type="button"
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
             className="absolute right-1.5 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-primary"
@@ -673,11 +727,17 @@ const MemberChat = () => {
         </Button>
       </form>
 
-      {/* Emoji Picker */}
+      {/* Emoji Picker — smart viewport-aware positioning */}
       {showEmojiPicker && (
         <div
           ref={emojiPickerRef}
-          className="absolute bottom-20 right-0 z-50"
+          className="fixed z-[9999]"
+          style={{
+            bottom: emojiPickerPosition.bottom,
+            right: emojiPickerPosition.right,
+            left: emojiPickerPosition.left,
+            top: emojiPickerPosition.top,
+          }}
         >
           <motion.div
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
