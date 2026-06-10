@@ -28,11 +28,8 @@ import { loginMutationFn } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 import { Loader } from "lucide-react";
 import { getAuthSuccessPath } from "@/lib/auth-navigation";
-import { useQueryClient } from "@tanstack/react-query";
-
 const SignIn = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const returnUrl = searchParams.get("returnUrl");
   const resetEmail = searchParams.get("email") || "";
@@ -75,7 +72,6 @@ const SignIn = () => {
       onSuccess: (data) => {
         const user = data.user;
         const nextPath = getAuthSuccessPath(user.currentWorkspace, returnUrl);
-        queryClient.invalidateQueries({ queryKey: ["authUser"] });
         if (!nextPath) {
           toast({
             title: "Workspace missing",

@@ -13,7 +13,7 @@ const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api"
 const options = {
   baseURL,
   withCredentials: true,
-  timeout: 10000,
+  timeout: 30000,
 };
 
 const API = axios.create(options);
@@ -54,7 +54,9 @@ API.interceptors.response.use(
         message ||
         (error.code === "ERR_NETWORK"
           ? `Unable to reach the API server at ${baseURL}. Make sure the backend is running and VITE_API_BASE_URL is correct for deployment.`
-          : error.message) ||
+          : error.code === "ECONNABORTED"
+            ? "The request took too long. Please try again. If the issue persists, check your internet connection."
+            : error.message) ||
         "Unable to connect to the server. Please check that the backend is running.",
       errorCode: errorCode || "UNKNOWN_ERROR",
     };

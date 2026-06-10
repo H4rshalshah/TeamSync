@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import Logo from "@/components/logo";
 import OAuthButtons from "@/components/auth/oauth-buttons";
 import PasswordInput from "@/components/auth/password-input";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { checkUsernameQueryFn, registerMutationFn } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 import { Loader, Check, X } from "lucide-react";
@@ -31,7 +31,6 @@ import { getAuthSuccessPath } from "@/lib/auth-navigation";
 
 const SignUp = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const returnUrl = searchParams.get("returnUrl");
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(
@@ -109,7 +108,6 @@ const SignUp = () => {
       onSuccess: (data) => {
         const user = data.user;
         const nextPath = getAuthSuccessPath(user.currentWorkspace, returnUrl);
-        queryClient.invalidateQueries({ queryKey: ["authUser"] });
         if (!nextPath) {
           toast({
             title: "Workspace missing",

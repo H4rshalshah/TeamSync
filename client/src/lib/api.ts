@@ -47,7 +47,9 @@ export const logoutMutationFn = async () => await API.post("/auth/logout");
 export const forgotPasswordMutationFn = async (data: {
   email: string;
 }): Promise<{ message: string; resetUrl?: string }> => {
-  const response = await API.post("/auth/forgot-password", data);
+  const response = await API.post("/auth/forgot-password", data, {
+    timeout: 60000,
+  });
   return response.data;
 };
 

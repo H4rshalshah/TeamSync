@@ -417,14 +417,20 @@ export const requestPasswordResetService = async (email: string) => {
   await user.save();
 
   const resetUrl = `${getFrontendOrigin()}/reset-password/${token}`;
-  const emailSent = await sendPasswordResetEmail({
-    to: user.email,
-    name: user.name,
-    resetUrl,
-  });
+
+  // Fire email asynchronously — don't block the response on SMTP
+  if (isSmtpConfigured()) {
+    sendPasswordResetEmail({
+      to: user.email,
+      name: user.name,
+      resetUrl,
+    }).catch((err) => {
+      console.error("[ForgotPassword] Failed to send reset email:", err);
+    });
+  }
 
   return {
-    emailSent,
+    emailSent: false,
     resetUrl: !isSmtpConfigured() && config.NODE_ENV !== "production" ? resetUrl : undefined,
   };
 };

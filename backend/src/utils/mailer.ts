@@ -14,6 +14,7 @@ export const sendPasswordResetEmail = async ({
   resetUrl: string;
 }) => {
   if (!isSmtpConfigured()) {
+    console.log("[Mailer] SMTP not configured — skipping email delivery");
     return false;
   }
 
@@ -27,19 +28,20 @@ export const sendPasswordResetEmail = async ({
     },
   });
 
-  await transporter.sendMail({
-    from: config.SMTP_FROM,
-    to,
-    subject: "Reset your Team Sync password",
-    text: [
-      `Hi ${name || "there"},`,
-      "",
-      "We received a request to reset your Team Sync password.",
-      `Open this link to set a new password: ${resetUrl}`,
-      "",
-      "This link expires in 30 minutes. If you did not request this, you can ignore this email.",
-    ].join("\n"),
-    html: `
+  try {
+    const info = await transporter.sendMail({
+      from: config.SMTP_FROM,
+      to,
+      subject: "Reset your Team Sync password",
+      text: [
+        `Hi ${name || "there"},`,
+        "",
+        "We received a request to reset your Team Sync password.",
+        `Open this link to set a new password: ${resetUrl}`,
+        "",
+        "This link expires in 30 minutes. If you did not request this, you can ignore this email.",
+      ].join("\n"),
+      html: `
       <div style="font-family:Arial,sans-serif;line-height:1.6;color:#111827">
         <h2>Reset your Team Sync password</h2>
         <p>Hi ${name || "there"},</p>
@@ -52,7 +54,12 @@ export const sendPasswordResetEmail = async ({
         <p>This link expires in 30 minutes. If you did not request this, you can ignore this email.</p>
       </div>
     `,
-  });
+    });
 
-  return true;
+    console.log(`[Mailer] Password reset email sent to ${to}: ${info.messageId}`);
+    return true;
+  } catch (error) {
+    console.error(`[Mailer] Failed to send password reset email to ${to}:`, error);
+    throw error;
+  }
 };

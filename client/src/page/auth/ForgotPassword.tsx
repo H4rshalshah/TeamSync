@@ -104,7 +104,7 @@ const ForgotPassword = () => {
                 />
                 <Button disabled={isPending} type="submit" className="w-full">
                   {isPending && <Loader className="animate-spin" />}
-                  Send reset link
+                  {isPending ? "Sending reset link..." : "Send reset link"}
                 </Button>
                 {devResetUrl && (
                   <Button asChild variant="outline" className="w-full">
