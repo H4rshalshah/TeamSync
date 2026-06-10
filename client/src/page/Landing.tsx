@@ -274,12 +274,14 @@ const Landing = () => {
       const rect = element.getBoundingClientRect();
       const viewportHeight = window.innerHeight || 1;
       const centerY = rect.top + rect.height / 2;
-      const distanceFromCenter = Math.abs(centerY - viewportHeight * 0.52);
-      const activeRange = viewportHeight * 0.64;
-      const progress = Math.max(0, Math.min(1, 1 - distanceFromCenter / activeRange));
+      const distanceFromCenter = Math.abs(centerY - viewportHeight * 0.5);
+      const activeRange = viewportHeight * 0.35;
+      const rawProgress = Math.max(0, Math.min(1, 1 - distanceFromCenter / activeRange));
+      // Smooth ease-out curve for more visible expand/shrink
+      const progress = rawProgress * rawProgress * (3 - 2 * rawProgress);
       element.style.setProperty("--network-progress", progress.toString());
       element.style.setProperty("--network-offset", `${800 * (1 - progress)}`);
-      element.style.setProperty("--network-line-opacity", progress > 0.02 ? progress.toString() : "0");
+      element.style.setProperty("--network-line-opacity", progress > 0.01 ? (0.3 + progress * 0.7).toString() : "0");
     };
 
     updateNetworkProgress();
@@ -399,21 +401,21 @@ const Landing = () => {
       </section>
 
       <section className="py-20">
-        <div className="mx-auto grid max-w-[88rem] items-center gap-14 px-4 sm:px-6 lg:grid-cols-[0.96fr_1.04fr] lg:gap-24 lg:px-8">
-          <div className="sphinx-reveal max-w-3xl">
+        <div className="mx-auto max-w-[88rem] px-4 sm:px-6 lg:px-8">
+          <div className="sphinx-reveal max-w-3xl mx-auto text-center">
             <p className="text-sm font-semibold uppercase text-[#2f6f4e]">
               Project Command View
             </p>
-            <h2 className="mt-3 text-4xl font-semibold tracking-normal sm:text-[3.65rem] sm:leading-[1.06]">
+            <h2 className="mt-3 text-4xl font-semibold tracking-normal sm:text-6xl">
               See members, tasks, and delivery status in one structured view.
             </h2>
-            <p className="mt-5 max-w-xl text-lg leading-8 text-[#171512]/65">
+            <p className="mt-5 mx-auto max-w-xl text-lg leading-8 text-[#171512]/65">
               A workspace should show who is involved, what is assigned, where
               work is blocked, and which projects are ready for review.
             </p>
           </div>
 
-          <div className="sphinx-reveal team-meeting-visual command-center-visual lg:translate-x-12" aria-hidden="true">
+          <div className="sphinx-reveal team-meeting-visual command-center-visual mt-14 max-w-5xl mx-auto" aria-hidden="true">
             <div className="command-center-card">
               <div className="command-center-header">
                 <div>
@@ -500,24 +502,25 @@ const Landing = () => {
 
       <section id="network" className="sphinx-project-network-section py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="sphinx-reveal max-w-3xl">
-            <p className="text-sm font-semibold uppercase text-[#ba5b35]">
-              Project Network
-            </p>
-            <h2 className="mt-3 text-4xl font-semibold tracking-normal sm:text-6xl">
-              Add people into every project path.
-            </h2>
-            <p className="mt-5 text-lg leading-8 text-[#171512]/65">
-              TeamSync connects stakeholders, owners, designers, engineers, and
-              reviewers around the same workspace flow, so every project moves
-              from brief to reporting without losing context.
-            </p>
-          </div>
+          <div className="lg:grid lg:grid-cols-[1fr_1.3fr] lg:gap-16 lg:items-center">
+            <div className="sphinx-reveal">
+              <p className="text-sm font-semibold uppercase text-[#ba5b35]">
+                Project Network
+              </p>
+              <h2 className="mt-3 text-4xl font-semibold tracking-normal sm:text-6xl">
+                Add people into every project path.
+              </h2>
+              <p className="mt-5 text-lg leading-8 text-[#171512]/65">
+                TeamSync connects stakeholders, owners, designers, engineers, and
+                reviewers around the same workspace flow, so every project moves
+                from brief to reporting without losing context.
+              </p>
+            </div>
 
-          <div
-            ref={networkRef}
-            className="sphinx-network-map sphinx-network-hub sphinx-reveal mt-14"
-          >
+            <div
+              ref={networkRef}
+              className="sphinx-network-map sphinx-network-hub sphinx-reveal mt-10 lg:mt-0"
+            >
             <svg
               className="sphinx-network-lines"
               viewBox="0 0 1180 620"
@@ -552,6 +555,7 @@ const Landing = () => {
             <div className="network-pill network-pill-status">Status updates</div>
           </div>
         </div>
+      </div>
       </section>
 
       <section id="how" className="sphinx-flow-section border-y border-black/10 py-24">

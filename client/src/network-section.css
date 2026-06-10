@@ -150,17 +150,17 @@ html.dark .network-hub-core {
 }
 
 .sphinx-network-hub .sphinx-network-lines path {
-  stroke-width: 1.8 !important;
+  stroke-width: 2 !important;
   stroke-dasharray: 800 !important;
   stroke-dashoffset: calc(var(--network-offset, 800px)) !important;
-  opacity: var(--network-line-opacity, 0) !important;
+  opacity: var(--network-line-opacity, 0.3) !important;
   stroke-linecap: round !important;
   stroke-linejoin: round !important;
   fill: none !important;
   stroke: #ef6a32 !important;
   transition:
-    stroke-dashoffset 800ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 800ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+    stroke-dashoffset 350ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 350ms cubic-bezier(0.22, 1, 0.36, 1) !important;
 }
 
 /* ─── Dark section backgrounds — no purple ─── */
