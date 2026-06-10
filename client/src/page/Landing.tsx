@@ -527,14 +527,14 @@ const Landing = () => {
               preserveAspectRatio="none"
               aria-hidden="true"
             >
-              <path d="M590 306 V89" />
-              <path d="M590 306 C535 220 420 220 313 206" />
-              <path d="M590 306 C645 220 760 220 867 206" />
-              <path d="M590 306 H313" />
-              <path d="M590 306 H867" />
-              <path d="M590 306 C535 395 420 395 313 516" />
-              <path d="M590 306 C645 395 760 395 867 516" />
-              <path d="M590 306 V531" />
+              <path d="M590 89 V306" />
+              <path d="M313 206 C420 220 535 220 590 306" />
+              <path d="M867 206 C760 220 645 220 590 306" />
+              <path d="M313 306 H590" />
+              <path d="M867 306 H590" />
+              <path d="M313 516 C420 395 535 395 590 306" />
+              <path d="M867 516 C760 395 645 395 590 306" />
+              <path d="M590 531 V306" />
             </svg>
 
             <div className="network-hub-core" aria-hidden="true">
