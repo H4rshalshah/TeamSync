@@ -402,20 +402,20 @@ const Landing = () => {
 
       <section className="py-20">
         <div className="mx-auto max-w-[88rem] px-4 sm:px-6 lg:px-8">
-          <div className="sphinx-reveal max-w-3xl mx-auto text-center">
+          <div className="sphinx-reveal max-w-5xl">
             <p className="text-sm font-semibold uppercase text-[#2f6f4e]">
               Project Command View
             </p>
-            <h2 className="mt-3 text-4xl font-semibold tracking-normal sm:text-6xl">
+            <h2 className="mt-3 text-4xl font-semibold tracking-normal sm:text-6xl max-w-3xl">
               See members, tasks, and delivery status in one structured view.
             </h2>
-            <p className="mt-5 mx-auto max-w-xl text-lg leading-8 text-[#171512]/65">
+            <p className="mt-5 max-w-2xl text-lg leading-8 text-[#171512]/65">
               A workspace should show who is involved, what is assigned, where
               work is blocked, and which projects are ready for review.
             </p>
           </div>
 
-          <div className="sphinx-reveal team-meeting-visual command-center-visual mt-14 max-w-5xl mx-auto" aria-hidden="true">
+          <div className="sphinx-reveal team-meeting-visual command-center-visual mt-14 max-w-5xl" aria-hidden="true">
             <div className="command-center-card">
               <div className="command-center-header">
                 <div>
