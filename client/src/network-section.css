@@ -174,7 +174,45 @@ html.dark .sphinx-network-hub {
   border-color: transparent !important;
 }
 
-/* ─── Responsive ─── */
+/* ─── Compact Review Cards ─── */
+.sphinx-review-card {
+  width: clamp(280px, 26vw, 420px) !important;
+  min-height: 120px !important;
+  max-height: 150px !important;
+  padding: 16px 18px !important;
+  border-radius: 18px !important;
+  flex: 0 0 clamp(280px, 26vw, 420px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 0 !important;
+}
+
+.sphinx-review-avatar {
+  width: 38px !important;
+  height: 38px !important;
+  font-size: 11px !important;
+  flex-shrink: 0 !important;
+}
+
+.sphinx-review-card .text-\[\#171512\]\/50,
+.sphinx-review-card .text-\[\#171512\]\/62 {
+  font-size: inherit !important;
+}
+
+.sphinx-review-card p.line-clamp-3 {
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-height: 4.2em !important;
+}
+
+.sphinx-review-track {
+  gap: 14px !important;
+}
+
 @media (max-width: 900px) {
   .sphinx-network-hub {
     width: min(56vw, 420px) !important;

@@ -662,7 +662,7 @@ const Landing = () => {
             <div className="sphinx-review-track">
               {[...reviews, ...reviews].map((review, index) => (
                 <article key={`${review.name}-${index}`} className="sphinx-review-card">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2.5">
                     <span className="sphinx-review-avatar">
                       {review.name
                         .split(" ")
@@ -670,12 +670,12 @@ const Landing = () => {
                         .slice(0, 2)
                         .join("")}
                     </span>
-                    <div>
-                      <h3 className="text-xl font-semibold">{review.name}</h3>
-                      <p className="text-[#171512]/50">{review.role}</p>
+                    <div className="min-w-0">
+                      <h3 className="text-[17px] font-semibold leading-tight">{review.name}</h3>
+                      <p className="text-[14px] text-[#171512]/50 leading-normal mt-0.5">{review.role}</p>
                     </div>
                   </div>
-                  <p className="mt-8 text-lg leading-8 text-[#171512]/62">
+                  <p className="mt-2.5 text-[15px] leading-snug text-[#171512]/62 line-clamp-3">
                     "{review.quote}"
                   </p>
                 </article>
