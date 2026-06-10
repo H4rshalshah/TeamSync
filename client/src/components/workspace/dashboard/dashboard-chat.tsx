@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageSquare,
@@ -318,10 +319,10 @@ const DashboardChat = () => {
     }
   }, []);
 
-  const handleEmojiSelect = (emoji: string) => {
+  const handleEmojiSelect = useCallback((emoji: string) => {
     setChatMessage((prev) => prev + emoji);
     inputRef.current?.focus();
-  };
+  }, []);
 
   // ── Submit ─────────────────────────────────────────────
   const submitChat = (event: FormEvent) => {
@@ -582,6 +583,7 @@ const DashboardChat = () => {
           <button
             ref={emojiButtonRef}
             type="button"
+            onMouseDown={(e) => e.stopPropagation()}
             onClick={() => {
               setShowEmojiPicker(!showEmojiPicker);
               // Position will be recalculated in the useEffect when showEmojiPicker becomes true
@@ -602,10 +604,10 @@ const DashboardChat = () => {
       </form>
 
       {/* Emoji Picker — smart viewport-aware positioning */}
-      {showEmojiPicker && (
+      {showEmojiPicker && createPortal(
         <div
           ref={emojiPickerRef}
-          className="fixed z-[9999]"
+          className="fixed z-[99999]"
           style={{
             bottom: emojiPickerPosition.bottom,
             right: emojiPickerPosition.right,
@@ -621,7 +623,8 @@ const DashboardChat = () => {
           >
             <EmojiPickerComponent onSelectEmoji={handleEmojiSelect} />
           </motion.div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
