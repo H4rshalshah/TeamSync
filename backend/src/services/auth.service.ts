@@ -253,8 +253,15 @@ export const registerUserService = async (body: {
   email: string;
   name: string;
   password: string;
+  termsAccepted: boolean;
 }) => {
-  const { email, name, password } = body;
+  const { email, name, password, termsAccepted } = body;
+
+  if (!termsAccepted) {
+    throw new BadRequestException(
+      "You must accept the Terms of Service and Privacy Policy to create an account."
+    );
+  }
 
   const createUser = async (session?: mongoose.ClientSession) => {
     await ensureDefaultRoles();
@@ -273,6 +280,8 @@ export const registerUserService = async (body: {
       email,
       name,
       password,
+      termsAccepted: true,
+      termsAcceptedAt: new Date(),
     });
     await saveWithOptionalSession(user, session);
 

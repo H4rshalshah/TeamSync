@@ -17,6 +17,7 @@ export type registerType = {
   name: string;
   email: string;
   password: string;
+  termsAccepted: boolean;
 };
 
 // USER TYPE

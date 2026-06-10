@@ -148,7 +148,7 @@ const InviteUser = () => {
     try {
       await verifyInvitePassword();
       registerMutate(
-      { name: regName, email: regEmail, password: regPassword },
+      { name: regName, email: regEmail, password: regPassword, termsAccepted: true },
       {
         onSuccess: () => {
           // Join workspace after successful registration

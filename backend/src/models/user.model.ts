@@ -10,6 +10,8 @@ export interface UserDocument extends Document {
   lastLogin: Date | null;
   resetPasswordTokenHash?: string | null;
   resetPasswordExpiresAt?: Date | null;
+  termsAccepted: boolean;
+  termsAcceptedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   currentWorkspace: mongoose.Types.ObjectId | null;
@@ -44,6 +46,8 @@ const userSchema = new Schema<UserDocument>(
     lastLogin: { type: Date, default: null },
     resetPasswordTokenHash: { type: String, default: null, select: true },
     resetPasswordExpiresAt: { type: Date, default: null, select: true },
+    termsAccepted: { type: Boolean, default: false },
+    termsAcceptedAt: { type: Date, default: null },
   },
   {
     timestamps: true,

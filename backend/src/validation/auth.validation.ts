@@ -13,6 +13,9 @@ export const registerSchema = z.object({
   name: z.string().trim().min(1).max(255),
   email: emailSchema,
   password: passwordSchema,
+  termsAccepted: z.boolean().refine((val) => val === true, {
+    message: "You must accept the Terms of Service and Privacy Policy to create an account.",
+  }),
 });
 
 export const loginSchema = z.object({

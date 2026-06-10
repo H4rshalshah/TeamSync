@@ -402,14 +402,14 @@ const Landing = () => {
 
       <section className="py-20">
         <div className="mx-auto max-w-[88rem] px-4 sm:px-6 lg:px-8">
-          <div className="sphinx-reveal max-w-5xl">
+          <div className="sphinx-reveal max-w-6xl">
             <p className="text-sm font-semibold uppercase text-[#2f6f4e]">
               Project Command View
             </p>
             <h2 className="mt-3 text-4xl font-semibold tracking-normal sm:text-6xl">
               See members, tasks, and delivery status in one structured view.
             </h2>
-            <p className="mt-5 max-w-4xl text-lg leading-8 text-[#171512]/65">
+            <p className="mt-5 max-w-5xl text-lg leading-8 text-[#171512]/65">
               A workspace should show who is involved, what is assigned, where work is blocked, and which projects are ready for review.
             </p>
           </div>
@@ -527,12 +527,12 @@ const Landing = () => {
               aria-hidden="true"
             >
               <path d="M590 306 V89" />
-              <path d="M590 306 C535 220 420 220 313 206" />
-              <path d="M590 306 C645 220 760 220 867 206" />
+              <path d="M590 306 C535 161 420 161 313 137" />
+              <path d="M590 306 C645 161 760 161 867 137" />
               <path d="M590 306 H313" />
               <path d="M590 306 H867" />
-              <path d="M590 306 C535 395 420 395 313 516" />
-              <path d="M590 306 C645 395 760 395 867 516" />
+              <path d="M590 306 C535 379 420 379 313 447" />
+              <path d="M590 306 C645 379 760 379 867 447" />
               <path d="M590 306 V531" />
             </svg>
 
@@ -559,11 +559,11 @@ const Landing = () => {
 
       <section id="how" className="sphinx-flow-section border-y border-black/10 py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="sphinx-reveal max-w-3xl">
+          <div className="sphinx-reveal">
             <p className="text-sm font-semibold uppercase text-[#2f6f4e]">
               The Flow
             </p>
-            <h2 className="mt-3 text-4xl font-semibold tracking-normal sm:text-6xl">
+            <h2 className="mt-3 text-4xl font-semibold tracking-normal sm:text-6xl max-w-5xl">
               Scroll through the same path your team follows.
             </h2>
           </div>
@@ -593,18 +593,16 @@ const Landing = () => {
       </section>
 
       <section id="features" className="py-24">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:px-8">
-          <div className="sphinx-reveal">
+        <div className="mx-auto max-w-[88rem] px-4 sm:px-6 lg:px-8">
+          <div className="sphinx-reveal max-w-6xl">
             <p className="text-sm font-semibold uppercase text-[#2f6f4e]">
               Platform
             </p>
             <h2 className="mt-3 text-4xl font-semibold tracking-normal sm:text-6xl">
               A SaaS foundation with the busywork removed.
             </h2>
-            <p className="mt-5 text-lg leading-8 text-[#171512]/65">
-              Built with React, Node.js, Express, MongoDB, Passport, sessions,
-              protected routes, permissions, invites, analytics, and a clean
-              dashboard for project teams.
+            <p className="mt-5 max-w-5xl text-lg leading-8 text-[#171512]/65">
+              Built with React, Node.js, Express, MongoDB, Passport, sessions, protected routes, permissions, invites, analytics, and a clean dashboard for project teams.
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
